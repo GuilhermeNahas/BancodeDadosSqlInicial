@@ -1,0 +1,137 @@
+CREATE DATABASE Banco_Academia_GuilhermeNahas;
+GO
+
+USE Banco_Academia_GuilhermeNahas;
+
+--LISTA OS BANCOS DE DADOS JA EXISTENTES
+SELECT name as NomeDoBanco
+FROM sys.databases 
+ORDER BY name;
+
+--LIISTA O BANCO DE DADOS ATUAL
+SELECT DB_NAME() AS BancoAtual;
+
+CREATE TABLE Professores(
+    IdProfessor int PRIMARY KEY IDENTITY (1,1),  -- IDENTITY -> Auto incremento dos ID
+    Nome VARCHAR(100) NOT NULL,
+    Email varchar(100) not null unique,  -- QUANDO PODE TER APENAS 1, POR EXEMPLO EMAIL, CPF e etc.
+    Especialidade VARCHAR(100) not null
+);
+
+CREATE TABLE Cursos(
+    IdCurso INT PRIMARY KEY IDENTITY (1,1),
+    NomeCurso VARCHAR(100) NOT NULL,
+    CargaHoraria INT NOT NULL CHECK (CargaHoraria > 0 AND CargaHoraria <= 200), -- CHECK -> Valida tipo um if (condicional)
+    IdProfessor INT NOT NULL,
+    Ativo BIT NOT NULL DEFAULT 1,
+    CONSTRAINT FK_Cursos_Professores -- CRIA UMA CHAVE ESTRANGEIRA
+    FOREIGN KEY (IdProfessor) REFERENCES Professores(IdProfessor)
+);
+
+CREATE TABLE Alunos(
+    IdAluno int PRIMARY KEY IDENTITY (1,1),
+    Nome VARCHAR(100) NOT NULL,
+    Email VARCHAR(100) NOT NULL UNIQUE,
+    Turma VARCHAR(100) NOT NULL,
+    DataNascimento DATE NOT NULL,
+    Ativo BIT NOT NULL CONSTRAINT DF_Alunos_Ativo DEFAULT 1, -- DEFAULT -> Define o valor como 1
+);
+
+CREATE TABLE Matriculas(
+    IdMatricula INT PRIMARY KEY IDENTITY(1,1),
+    IdAluno INT NOT NULL,
+    IdCurso INT NOT NULL,
+    DataMatricula DATE NOT NULL CONSTRAINT DF_Matriculas_Data DEFAULT (CONVERT(DATE, GETDATE())),
+    NotaFinal DECIMAL(4,2) NULL CHECK (NotaFinal BETWEEN 0 AND 10),
+    StatusMatricula VARCHAR(20) NOT NULL CONSTRAINT DF_Matriculas_Status DEFAULT 'Ativa',
+
+    CONSTRAINT UQ_Matriculas_AlunoCurso UNIQUE (IdAluno, IdCurso),
+    CONSTRAINT FK_Matriculas_Alunos
+        FOREIGN KEY (IdAluno) REFERENCES Alunos(IdAluno),
+    CONSTRAINT FK_Matriculas_Cursos
+        FOREIGN KEY (IdCurso) REFERENCES Cursos(IdCurso)    
+);
+
+INSERT INTO Professores (Nome, Email, Especialidade)
+VALUES
+('Ana Martins',     'ana.martins@academia.com',    'Banco de Dados'),
+('Carlos Ribeiro',  'carlos.ribeiro@academia.com', 'Programação'),
+('Fernanda Lima',   'fernanda.lima@academia.com',  'Desenvolvimento Web'),
+('Rafael Souza',    'rafael.souza@academia.com',   'Redes de Computadores');
+
+INSERT INTO Cursos (NomeCurso, CargaHoraria, IdProfessor)
+VALUES
+('Banco de Dados Inicial', 40, 1),
+('SQL Server Essencial',   36, 1),
+('Lógica de Programação',  40, 2),
+('JavaScript para Jovens', 32, 2),
+('HTML e CSS',             30, 3),
+('Fundamentos de Redes',   24, 4);
+
+INSERT INTO Alunos (Nome, Email, Turma, DataNascimento)
+VALUES
+('Alice Pereira',   'alice.pereira@escola.com',   '2INFO-A', '2008-03-14'),
+('Bruno Alves',     'bruno.alves@escola.com',     '2INFO-A', '2008-07-22'),
+('Camila Rocha',    'camila.rocha@escola.com',    '2INFO-A', '2008-01-30'),
+('Diego Santos',    'diego.santos@escola.com',    '2INFO-B', '2007-11-09'),
+('Elisa Nunes',     'elisa.nunes@escola.com',     '2INFO-B', '2008-05-18'),
+('Felipe Costa',    'felipe.costa@escola.com',    '2INFO-B', '2008-09-02'),
+('Gabriela Melo',   'gabriela.melo@escola.com',   '2INFO-C', '2007-12-12'),
+('Henrique Luz',    'henrique.luz@escola.com',    '2INFO-C', '2008-06-28'),
+('Isabela Torres',  'isabela.torres@escola.com',  '2INFO-C', '2008-02-06'),
+('João Mendes',     'joao.mendes@escola.com',     '2INFO-C', '2007-08-25');
+
+INSERT INTO Matriculas (IdAluno, IdCurso, DataMatricula, NotaFinal, StatusMatricula)
+VALUES
+    (1, 1, '2026-02-03', 8.50, 'Concluída'),
+    (1, 5, '2026-02-03', 9.00, 'Concluída'),
+    (2, 1, '2026-02-03', 7.00, 'Concluída'),
+    (2, 3, '2026-02-04', 8.00, 'Ativa'),
+    (3, 2, '2026-02-04', 9.50, 'Concluída'),
+    (3, 4, '2026-02-04', NULL, 'Ativa'),
+    (4, 3, '2026-02-05', 6.50, 'Concluída'),
+    (5, 5, '2026-02-05', 8.50, 'Concluída'),
+    (6, 6, '2026-02-06', NULL, 'Ativa'),
+    (7, 1, '2026-02-06', 7.50, 'Concluída'),
+    (8, 2, '2026-02-07', 10.00, 'Concluída'),
+    (8, 6, '2026-02-07', 8.00, 'Concluída'),
+    (9, 4, '2026-02-08', NULL, 'Ativa'),
+    (9, 5, '2026-02-08', 9.00, 'Concluída'),
+    (10, 3, '2026-02-09', 7.00, 'Concluída'),
+    (10, 2, '2026-02-09', NULL, 'Ativa');
+
+SELECT * FROM Professores;
+SELECT * FROM Cursos;
+SELECT * FROM Alunos;
+SELECT * FROM Matriculas;
+
+SELECT Nome FROM Professores -- mostrar apenas a tabela informada
+SELECT Nome AS NomeDoaluno, Turma AS Sala FROM Alunos; -- Apelido para deixar o titulo mais claro na resposta
+
+-- CONSULTA POR ORDEM ALFABETICA
+SELECT Nome, Turma FROM Alunos
+ORDER BY Nome ASC; -- ASC -> ORDEM DECRESCENTE
+
+-- OS 5 PRIMEIROS
+SELECT TOP 5 Nome, Turma, DataNascimento FROM Alunos
+ORDER BY Nome;
+
+-- FILTROS COM WHERE
+-- WHERE -> FILTRA AS LINHAS
+SELECT Nome, Turma FROM Alunos WHERE Turma = '2INFO-A'
+
+-- DIFERENTE DE
+SELECT Nome, Turma FROM Alunos WHERE Turma <> '2INFO-A' -- <> BUSCA ELEMENTOS DIFERENTES DE 2INFO-A
+
+-- AND -> AS 2 CONDICOES DEVEM SER VERDADEIRAS PARA QUE O REGISTRO SEJA RETORNADO NA CONSULTA (E)
+SELECT Nome, Turma, DataNascimento FROM Alunos WHERE Turma = '2INFO-A' AND DataNascimento > '2008-01-01'
+
+
+-- OR -> (OU) PELO MENOS UMA CONDICAO DEVE SER VERDADEIRA
+SELECT Nome, Turma FROM Alunos WHERE Turma = '2INFO-A' OR DataNascimento > '2008-01-01'
+
+-- IN -> VERSAO CURTA PARA VARIOS VALORES
+SELECT Nome, Turma FROM Alunos WHERE Turma IN ('2INFO-A', '2INFO-B');
+
+-- LIKE -> % SIGNIFICA QUALQUR QUANTIDADE DE CARACTERES E SIGNIFICA QUALQUER CARACTER
+SELECT Nome, Email FROM Alunos WHERE Nome LIKE '%es'; -- SELECIONA OS NOMES E EMAILS DOS ALUNOS NOS QUAIS O EMAIL TERMINA COM '@escola.com'
